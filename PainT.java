@@ -71,15 +71,15 @@ public class PainT extends Application {
     ImageView myImageView;   
     Image image;
     Path path;
-
+    
     @Override
     public void start(Stage primaryStage) {
         //Group root = new Group();
         //unused 
         //Canvas canvas = new Canvas();
-
+        
         StackPane pane = new StackPane();
-
+        
         ColorPicker colorPicker1 = new ColorPicker();
 
         //path to draw line, line width is one by default
@@ -87,16 +87,16 @@ public class PainT extends Application {
         path = new Path();
         path.setStrokeWidth(line_width);
         //path.setStroke(Color.BLACK); //error
-
+        
         ToolBar tb = new ToolBar();
-
+        
         //create image view and default size
-
+        
         ImageView myImageView = new ImageView(image);
         myImageView.setPreserveRatio(true);
         myImageView.setFitHeight(500);
         myImageView.setFitWidth(500);           
-
+        
         //scrollbars 
         /*
         ScrollBar horzS = new ScrollBar();
@@ -115,12 +115,12 @@ public class PainT extends Application {
         });    */
 
         // scrollpane, doesn't show
-
+        
         ScrollPane scroll = new ScrollPane();
         scroll.setHbarPolicy(ScrollBarPolicy.ALWAYS);
         scroll.setVbarPolicy(ScrollBarPolicy.ALWAYS);         
         scroll.setContent(vBox);
-
+        
         //create menu and menubar
         Menu menu1 = new Menu("Options");
         Menu menu2 = new Menu("Draw"); //add color chooser and line here
@@ -204,7 +204,7 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Save Image");
-
+                
                 File file = fileChooser.showSaveDialog(primaryStage);
                 if (file != null) {
                     try {
@@ -231,7 +231,7 @@ public class PainT extends Application {
                 line_width = Integer.valueOf(input);
             }
         });   
-
+        
         //add menu items
         menu1.getItems().add(menuItem1);
         menu1.getItems().add(menuItem6);
@@ -253,7 +253,7 @@ public class PainT extends Application {
         pane.getChildren().add(vBox);
         //pane.getChildren().add(horzS);
         //pane.getChildren().add(vertS);
-        pane.getChildren().add(scroll);
+        vBox.getChildren().add(scroll);
         //try to fit scene to image view
         height = myImageView.getFitHeight();
         width = myImageView.getFitWidth();   
@@ -263,7 +263,7 @@ public class PainT extends Application {
         primaryStage.setTitle("Pain(t)");
         primaryStage.setScene(scene);
         primaryStage.show();
-
+        
         /* for draw line mouse event
         scene.setOnMouseClicked(mouseHandler);
         scene.setOnMouseDragged(mouseHandler);
@@ -274,14 +274,16 @@ public class PainT extends Application {
         scene.setOnMouseReleased(mouseHandler);        
         */
     }
-
+    
     //draw line
     // error with event type?
     /*
     public void mouseHandler(MouseEvent mouseEvent) {
         ;
+
     } 
     EventHandler<MouseEvent> mouseHandler = new EventHandler<MouseEvent>() {
+
     @Override
         public void handle(MouseEvent mouseEvent) {
         if (mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED) {
@@ -294,7 +296,7 @@ public class PainT extends Application {
         }
         }
     }; */
-
+    
     public static void main(String[] args) {
         launch(args);
     }    
