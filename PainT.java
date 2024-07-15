@@ -114,12 +114,12 @@ public class PainT extends Application {
                 System.out.println(-new_val.doubleValue());
         });    */
 
-        // scrollpane, doesn't show
+        // scrollpane
         
         ScrollPane scroll = new ScrollPane();
         scroll.setHbarPolicy(ScrollBarPolicy.ALWAYS);
         scroll.setVbarPolicy(ScrollBarPolicy.ALWAYS);         
-        scroll.setContent(vBox);
+        scroll.setContent(myImageView);
         
         //create menu and menubar
         Menu menu1 = new Menu("Options");
