@@ -13,6 +13,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -33,8 +34,11 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -49,6 +53,11 @@ new features to implement
 * have an Undo/Redo using an abstract data type ("stack" preferred/recommended); you should not use the FX built in tool!
 * be able to draw a "regular" (same side length) polygon with the user specifying the # of sides.
 * [The Big One] Select a piece of the image and move it.  
+* have at least 3 unit tests.  (More info coming in class...)
+* have a timer that allows for "autosave" [every X seconds, it saves a temporary copy - it should NOT overwrite the existing file if any]; ideally this should be threaded.  
+This timer should be visible/invisible to the user at their option.  X should be something that can be set by the user.  If changed, it should persist on the next use of the software on that machine.]  
+* have icons for tools
+* have mouseover help for controls (if a icons+text as the tool, a short explanation is sufficient - if icons only were used, just a text name is sufficient)
 */
 
 public class PainT extends Application {
@@ -58,21 +67,20 @@ public class PainT extends Application {
     //undo stack
     static Stack<Event> Undo = new Stack<Event>();
     static Stack<Event> Redo = new Stack<Event>();
-
         
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        
         GridPane pane = new GridPane();
         //create color picker and set value to default to black
         ColorPicker colorPicker1 = new ColorPicker();
         colorPicker1.setValue(Color.BLACK);
+        //displays rgb values
+        Label colorLabel = new Label("Color: " + colorPicker1.getValue().toString());        
         
         ToolBar tb = new ToolBar();
         
         inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Pictures\\default.png"); 
         Image image = new Image(inputstream);
-        //create image view and default size
         
         //canvas and context
         Canvas canvas = new Canvas(500,500); 
@@ -131,6 +139,156 @@ public class PainT extends Application {
         CheckMenuItem menuItem19 = new CheckMenuItem("Ellipses");
         CheckMenuItem menuItem20 = new CheckMenuItem("Erase Tool");
         
+        //help menu item event
+        menuItem4.setOnAction((ActionEvent t) -> {
+            Dialog<String> dialog = new Dialog<String>();
+            Dialog response = dialog;
+            dialog.setTitle("Help");
+            dialog.setContentText("Help\n\nOptions tab: select and save files."
+                    + "\nDraw tab: draw lines on image.\nSelect color with color picker on the right."
+                    + "\nScroll bars appear when the image is bigger than the screen.\nYou can zoom in and out using the slider at the bottom."
+                    + "\n\nKeyboard Shortcuts\ncontrol s: save\nalt f: open file\ncontrol r: resize");  
+            ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().add(close);               
+            dialog.showAndWait();
+        });
+        //about menu item event
+        menuItem5.setOnAction((ActionEvent t) -> {
+            Dialog<String> dialog = new Dialog<String>();
+            Dialog response = dialog;
+            dialog.setTitle("Help");
+            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.4\nAuthor: Mackenzie Albright");            
+            ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().add(close);                       
+            dialog.showAndWait();
+        });        
+        
+        /*
+        * open a text input dialog when item 12 is clicked
+        * user enters text that is turned into a text object
+        * on the image. not fully implemented yet
+        */
+        menuItem12.setOnAction((ActionEvent event) -> {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.getEditor().setText("Enter Text");
+            dialog.setTitle("Insert text");
+            dialog.setContentText("Insert text to place on the image.");
+            dialog.show(); //don't use show and wait
+            
+            dialog.getEditor().setOnAction((ActionEvent t) -> {
+                //create text and place on image
+                //IMPLEMENT EVENTUALLY
+                //size, font, bold, italic, etc, allow user to drag text to where they want
+                String text_input = dialog.getEditor().getText();
+                gc.strokeText(text_input, 100, 100);
+                Undo.push(t);
+            });      
+        });
+        //open new tab when item 13 is clicked
+        //doesn't work yet
+        menuItem13.setOnAction((ActionEvent event) -> {
+            Tab tab2 = new Tab();
+            tab.setText("new tab");
+            //tab.setContent(null);
+            tabPane.getTabs().add(tab);
+            Undo.push(event);
+        });
+        
+        //exit program when item 2 is clicked
+        menuItem2.setOnAction((ActionEvent t) -> {
+            System.exit(0);
+        });
+
+        //open file when item 1 is clicked
+        menuItem1.setOnAction(new EventHandler<ActionEvent>() {
+        //open file explorer and set it to image display when item 1 is clicked
+            @Override
+            public void handle(ActionEvent event) {
+                pain.t.PaintMethods.file(primaryStage, canvas, gc);
+                Undo.push(event);
+        }});            
+        //save/save as action event
+        menuItem6.setOnAction(new EventHandler<ActionEvent>() {
+            
+            @Override
+            public void handle(ActionEvent event) {
+                pain.t.PaintMethods.save(primaryStage, canvas);
+                Undo.push(event);
+            }
+        });        
+        //clear image when clear image menu item is clicked
+        menuItem10.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+                try {
+                    inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Pictures\\default.png");
+                    Image image = new Image(inputstream);
+                    gc.drawImage(image, 0, 0);
+                    Undo.push(t);
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(PainT.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });        
+        //resize
+        menuItem8.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                pain.t.PaintMethods.resize(canvas);    
+                Undo.push(event);
+            }
+        });
+    
+        //impact line and color label when a new color is selected by color picker
+        colorPicker1.setOnAction(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                gc.setStroke(colorPicker1.getValue());      
+                colorLabel.setText("Color: " + colorPicker1.getValue().toString());
+                Undo.push(event);
+            }
+        });        
+               
+        //action event for eyedropper
+        menuItem14.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (menuItem14.isSelected()) {
+                    pain.t.DrawTool.eyeDropper(canvas, gc);
+                    Color color;
+                    color = (Color) gc.getStroke();
+                    Undo.push(event);
+                    //try to get color from gc
+                    colorPicker1.setValue(color);
+                    colorLabel.setText("Color: " + color.toString()); 
+                    //not changing to selected color
+                }
+                else {
+                    //nothing
+                }
+            }
+        });        
+        
+        //open input text dialog to enter specified line width
+        menuItem11.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+                TextInputDialog td = new TextInputDialog("Enter line width and press enter and ok.");
+                td.show();
+                td.getEditor().setOnAction((ActionEvent event) -> {
+                    try {
+                        int line_width = Integer.parseInt(td.getEditor().getText());
+                        gc.setLineWidth(line_width);      
+                        Undo.push(event);
+                    } catch (NumberFormatException e) {
+                        System.out.println("On-Action failed: " + e);
+                    }
+                });                
+            }
+        });           
+        
+        
+        
         //action event for undo
         menuItem15.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -139,48 +297,31 @@ public class PainT extends Application {
                 //empty stack exception
             }
         });
-        
-        //action event for eyedropper
-        menuItem14.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                if (menuItem14.isSelected()) {
-                    eyeDropper(canvas);
-                    Undo.push(event);
-                }
-                else {
-                    //nothing
-                }
-            }
-        });
-        
-        //action event for pencil tool
+                
+        //action event for erase tool 
         menuItem20.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem20.isSelected()) {
+                if (((CheckMenuItem)event.getSource()).isSelected()) {
                     pain.t.DrawTool.erase(canvas, gc);
                     Undo.push(event);
                 }
-                else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
-            }
+                else
+                    ;
+            }            
         });        
         
         //action event for pencil tool
         menuItemP.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(ActionEvent event) {
-                if (menuItemP.selectedProperty().get()) {
+            public void handle(ActionEvent e)
+            {
+                if (menuItemP.isSelected()) {
                     pain.t.DrawTool.pencil(canvas, gc);
-                    Undo.push(event);
+                    Undo.push(e);
                 }
-                else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                else
+                    ;
             }
         });
         
@@ -258,136 +399,7 @@ public class PainT extends Application {
                 }
             }
         });         
-        
-        /*
-        * open a text input dialog when item 12 is clicked
-        * user enters text that is turned into a text object
-        * on the image. not fully implemented yet
-        */
-        menuItem12.setOnAction((ActionEvent event) -> {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.getEditor().setText("Enter Text");
-            dialog.setTitle("Insert text");
-            dialog.setContentText("Insert text to place on the image.");
-            dialog.show(); //don't use show and wait
-            
-            dialog.getEditor().setOnAction((ActionEvent t) -> {
-                //create text and place on image
-                //IMPLEMENT EVENTUALLY
-                //size, font, bold, italic, etc, allow user to drag text to where they want
-                String text_input = dialog.getEditor().getText();
-                gc.strokeText(text_input, 100, 100);
-                Undo.push(t);
-            });      
-        });
-        //open new tab when item 13 is clicked
-        //doesn't work yet
-        menuItem13.setOnAction((ActionEvent event) -> {
-            Tab tab2 = new Tab();
-            tab.setText("new tab");
-            //tab.setContent(null);
-            tabPane.getTabs().add(tab);
-            Undo.push(event);
-        });
-        
-        //exit program when item 2 is clicked
-        menuItem2.setOnAction((ActionEvent t) -> {
-            System.exit(0);
-        });
-        //help menu item event
-        menuItem4.setOnAction((ActionEvent t) -> {
-            Dialog<String> dialog = new Dialog<String>();
-            Dialog response = dialog;
-            dialog.setTitle("Help");
-            dialog.setContentText("Help\n\nOptions tab: select and save files."
-                    + "\nDraw tab: draw lines on image.\nSelect color with color picker on the right."
-                    + "\nScroll bars appear when the image is bigger than the screen.\nYou can zoom in and out using the slider at the bottom."
-                    + "\n\nKeyboard Shortcuts\ncontrol s: save\nalt f: open file\ncontrol r: resize");  
-            ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
-            dialog.getDialogPane().getButtonTypes().add(close);               
-            dialog.showAndWait();
-        });
-        //about menu item event
-        menuItem5.setOnAction((ActionEvent t) -> {
-            Dialog<String> dialog = new Dialog<String>();
-            Dialog response = dialog;
-            dialog.setTitle("Help");
-            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.4\nAuthor: Mackenzie Albright");            
-            ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
-            dialog.getDialogPane().getButtonTypes().add(close);                       
-            dialog.showAndWait();
-        });
 
-        //open file when item 1 is clicked
-        menuItem1.setOnAction(new EventHandler<ActionEvent>() {
-        //open file explorer and set it to image display when item 1 is clicked
-            @Override
-            public void handle(ActionEvent event) {
-                pain.t.PaintMethods.file(primaryStage, canvas, gc);
-                Undo.push(event);
-        }});            
-        //save/save as action event
-        menuItem6.setOnAction(new EventHandler<ActionEvent>() {
-            
-            @Override
-            public void handle(ActionEvent event) {
-                pain.t.PaintMethods.save(primaryStage, canvas);
-                Undo.push(event);
-            }
-        });        
-        //clear image when clear image menu item is clicked
-        menuItem10.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                try {
-                    inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Pictures\\default.png");
-                    Image image = new Image(inputstream);
-                    gc.drawImage(image, 0, 0);
-                    Undo.push(t);
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(PainT.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        });        
-        //resize
-        menuItem8.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                pain.t.PaintMethods.resize(canvas);    
-                Undo.push(event);
-            }
-        });
-        
-    
-        //displays rgb values
-        Label colorLabel = new Label("Color: " + colorPicker1.getValue().toString());
-        //impact line and color label when a new color is selected by color picker
-        colorPicker1.setOnAction(new EventHandler() {
-            @Override
-            public void handle(Event event) {
-                gc.setStroke(colorPicker1.getValue());      
-                colorLabel.setText("Color: " + colorPicker1.getValue().toString());
-                Undo.push(event);
-            }
-        });        
-               
-        //open input text dialog to enter specified line width
-        menuItem11.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                TextInputDialog td = new TextInputDialog("Enter line width and press enter and ok.");
-                td.show();
-                td.getEditor().setOnAction((ActionEvent event) -> {
-                    try {
-                        int line_width = Integer.parseInt(td.getEditor().getText());
-                        gc.setLineWidth(line_width);      
-                        Undo.push(event);
-                    } catch (NumberFormatException e) {
-                        System.out.println("On-Action failed: " + e);
-                    }
-                });                
-            }
-        });   
         
         //zoom slider tool
         Slider slider = new Slider();
@@ -411,6 +423,7 @@ public class PainT extends Application {
             }
         });        
                 
+        
         //add menu items
         menu1.getItems().add(menuItem1);
         menu1.getItems().add(menuItem6);
@@ -455,6 +468,8 @@ public class PainT extends Application {
         * @ inputs control s: save
         * @ inputs alt f: open file
         * @ inputs control r: resize
+        * @ inputs escape: exit
+        * @ inputs shift e: erase
         */
         scene.addEventHandler(KeyEvent.KEY_PRESSED, (key) -> {
             if(key.getCode()==KeyCode.S && key.isControlDown()) {
@@ -465,7 +480,20 @@ public class PainT extends Application {
             }
             if(key.getCode()==KeyCode.R && key.isControlDown()) {
                 pain.t.PaintMethods.resize(canvas);
+            }        
+            if(key.getCode()==KeyCode.ESCAPE) {
+                System.exit(0);
+            }
+            //bug present here too in the drawing tools
+            if(key.getCode()==KeyCode.N) {
+                pain.t.DrawTool.pencil(canvas, gc);
+            }
+            if(key.getCode()==KeyCode.L) {
+                pain.t.DrawTool.straightLine(canvas, gc);
             }            
+            if(key.getCode()==KeyCode.E && key.isShiftDown()) {
+                pain.t.DrawTool.erase(canvas, gc);
+            }
         });
         
         primaryStage.setTitle("Pain(t)");
@@ -475,14 +503,7 @@ public class PainT extends Application {
 
     } 
 
-    //create eye dropper tool
-    public Color eyeDropper(Canvas canvas) {
-        //user clicks on imageview and return color clicked 
-        //on if eyedropper is active
-        
-        ;
-        return null;
-    }
+
     /*
     * @param Undo take a stack Undo and pop it from the list
     * @param Redo take a stack Redo and add it to the list
