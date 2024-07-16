@@ -1,7 +1,6 @@
 package pain.t;
 
 import java.util.Stack;
-import javafx.fxml.FXMLLoader;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.scene.canvas.Canvas;
@@ -73,9 +72,10 @@ public class PainTTest extends Application{
         GraphicsContext gc = null;  
         ColorPicker colorpicker = new ColorPicker();    
         Label colorLabel = null;    
+        Label toolLabel = null;
         int selectedTool = 0;
         PainT instance = new PainT();
-        instance.selectedToolListener(canvas, gc, colorpicker, colorLabel, selectedTool);
+        instance.selectedToolListener(canvas, gc, colorpicker, colorLabel, selectedTool, toolLabel);
     }
 
     /**
