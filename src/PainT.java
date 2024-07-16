@@ -42,9 +42,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /*
@@ -62,9 +64,15 @@ Some more: a second one.
 */
 
 public class PainT extends Application {
+    
+    MyLogger logger = new MyLogger();
+    Log log;
+    
     //global variables
     FileInputStream inputstream;
     int selectedTool;
+    double HEIGHT = Screen.getPrimary().getBounds().getHeight() - 60;
+    double WIDTH = Screen.getPrimary().getBounds().getWidth();
     
     //undo stack
     static Stack<Event> Undo = new Stack<Event>();
@@ -88,9 +96,9 @@ public class PainT extends Application {
         Image image = new Image(inputstream);
         
         //canvas and context
-        Canvas canvas = new Canvas(500,500); 
+        Canvas canvas = new Canvas(image.getWidth(), image.getHeight());
         GraphicsContext gc = canvas.getGraphicsContext2D();    
-        gc.drawImage(image,0,0);
+        gc.drawImage(image, 0,0);
         //set line color and width
         gc.setFill(Color.LIGHTGRAY);
         gc.setStroke(Color.BLACK); 
@@ -104,8 +112,8 @@ public class PainT extends Application {
         
         //scroll pane
         ScrollPane scroll = new ScrollPane();
-        scroll.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
-        scroll.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);      
+        scroll.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+        scroll.setVbarPolicy(ScrollBarPolicy.ALWAYS);      
         scroll.setPannable(true); //add feature to allow user to opt out of panning
         scroll.setContent(canvas);
         //create menu and menubar
@@ -149,31 +157,31 @@ public class PainT extends Application {
         CheckMenuItem citemPolygon = new CheckMenuItem("Polygon");
         
         //initialize icons
-        ImageView iconfile = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\fileicon.png")));
-        ImageView iconsave = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\saveicon.png")));
-        ImageView iconclear = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\clearicon.png")));
-        ImageView iconproject = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\projecticon.png")));
-        ImageView iconsettings = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\settingsicon.png")));
-        ImageView iconundo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\undoicon.png")));
-        ImageView iconredo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\redoicon.png")));
-        ImageView iconclose = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\exiticon.png")));
-        ImageView iconhelp = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\helpicon.png")));
-        ImageView iconabout = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\abouticon.png")));
-        ImageView iconline = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\lineicon.png")));
-        ImageView iconline2 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\lineicon.png")));        
-        ImageView iconpencil = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\pencilicon.png")));
-        ImageView iconwidth = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\sizeicon.png")));
-        ImageView iconsize = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\sizeicon.png")));
-        ImageView icontext = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\texticon.png")));
-        ImageView iconeyedropper = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\droppericon.png")));
-        ImageView iconerase = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\eraseicon.png")));
-        ImageView iconshapes = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\shapesicon.png")));        
-        ImageView iconrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\rectangleicon.png")));
-        ImageView iconroundrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\roundrectangleicon.png")));
-        ImageView iconsquare = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\squareicon.png")));
-        ImageView iconellipse = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\ellipseicon.png")));
-        ImageView iconcircle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\circleicon.png")));
-        ImageView iconpolygon = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\polygonicon.png")));
+        ImageView iconfile = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\fileicon.png")));
+        ImageView iconsave = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\saveicon.png")));
+        ImageView iconclear = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\clearicon.png")));
+        ImageView iconproject = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\projecticon.png")));
+        ImageView iconsettings = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\settingsicon.png")));
+        ImageView iconundo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\undoicon.png")));
+        ImageView iconredo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\redoicon.png")));
+        ImageView iconclose = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\exiticon.png")));
+        ImageView iconhelp = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\helpicon.png")));
+        ImageView iconabout = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\abouticon.png")));
+        ImageView iconline = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\lineicon.png")));
+        ImageView iconline2 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\lineicon.png")));        
+        ImageView iconpencil = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\pencilicon.png")));
+        ImageView iconwidth = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\sizeicon.png")));
+        ImageView iconsize = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\sizeicon.png")));
+        ImageView icontext = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\texticon.png")));
+        ImageView iconeyedropper = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\droppericon.png")));
+        ImageView iconerase = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\eraseicon.png")));
+        ImageView iconshapes = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\shapesicon.png")));        
+        ImageView iconrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\rectangleicon.png")));
+        ImageView iconroundrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\roundrectangleicon.png")));
+        ImageView iconsquare = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\squareicon.png")));
+        ImageView iconellipse = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\ellipseicon.png")));
+        ImageView iconcircle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\circleicon.png")));
+        ImageView iconpolygon = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\polygonicon.png")));
 
         //set icon graphics
         itemFile.setGraphic(iconfile);
@@ -337,7 +345,7 @@ public class PainT extends Application {
                 try {
                     inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png");
                     Image image = new Image(inputstream);
-                    gc.drawImage(image, 0, 0);
+                    gc.drawImage(image,WIDTH,HEIGHT - 100);
                     //Undo.push(t);
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(PainT.class.getName()).log(Level.SEVERE, null, ex);
@@ -362,6 +370,8 @@ public class PainT extends Application {
                 Undo.push(event);
             }
         });        
+        
+        
                
         //action event for eyedropper     
         citemEyedropper.setOnAction(e -> {
@@ -403,7 +413,7 @@ public class PainT extends Application {
         //action event for erase tool 
         citemErase.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(ActionEvent event) {
+            public void handle(ActionEvent event) { 
                 if (selectedTool == 2) {
                     selectedTool = 0;
                     selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
@@ -411,14 +421,7 @@ public class PainT extends Application {
                 else {
                     selectedTool = 2;
                     selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
-                }
-                /*
-                if (citemErase.isSelected()) {
-                    selectedTool = 2; }
-                else {
-                    selectedTool = 0; }
-
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);*/
+                } 
             }            
         });        
         
@@ -426,12 +429,14 @@ public class PainT extends Application {
         citemPencil.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (citemPencil.isSelected()) {
-                    selectedTool = 3; }
+                if (selectedTool == 3) {
+                    selectedTool = 0; 
+                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);                    
+                }
                 else { 
-                    selectedTool = 0; }
-                
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+                    selectedTool = 3; 
+                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);    
+                }
             }
         });
         
@@ -459,7 +464,7 @@ public class PainT extends Application {
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
-        });
+        }); 
         
         //action event for round rectangle tool
         citemRoundRect.setOnAction(new EventHandler<ActionEvent>() {
@@ -535,6 +540,7 @@ public class PainT extends Application {
         slider.setMajorTickUnit(50);
         slider.setMinorTickCount(5);
         slider.setBlockIncrement(100);
+        
         //improve, scales out very far, slider in weird place, scroll pane doesn't interact with it, etc etc
         final Tooltip tooltip = new Tooltip();
         //add zoom action and tooltip to slider
@@ -543,6 +549,7 @@ public class PainT extends Application {
                 Number old_val, Number new_val) {
                     canvas.setScaleX(new_val.doubleValue());
                     canvas.setScaleY(new_val.doubleValue());
+                    //change scrollpane?
                     tooltip.setText(String.format("Zoom percent: %.2f", new_val));
                     slider.setTooltip(tooltip);
             }
@@ -592,8 +599,9 @@ public class PainT extends Application {
         toolLabel.setTranslateX(250);
         pane.getChildren().add(toolLabel);
         
-        //set scene
-        Scene scene = new Scene(pane, canvas.getWidth()+10, canvas.getHeight()+175);  
+        //  tabpane covers toolbar
+        
+        Scene scene = new Scene(pane, WIDTH, HEIGHT);
         
         //settings menu item event
         itemSettings.setOnAction((ActionEvent t) -> {
@@ -632,7 +640,7 @@ public class PainT extends Application {
                 selectedTool = 2;
             }
             
-            selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+            //selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
         });
         
         
@@ -643,7 +651,7 @@ public class PainT extends Application {
 
     } 
 
-    /*
+    /**
     * @param Undo take a stack Undo and pop it from the list
     * @param Redo take a stack Redo and add it to the list
     */
@@ -655,10 +663,11 @@ public class PainT extends Application {
             Redo.push(X);
         }    
         
-    /*
+    /**
     * finds if a change was made to the default canvas
     * opens a confirmation box before closing program
     * @param canvas canvas to compare
+     * @return boolean returns true if the canvas was changed
     */
     public boolean findChange(Canvas canvas) {
         boolean isChanged = false;
@@ -691,10 +700,17 @@ public class PainT extends Application {
         return isChanged;
     }
     
-    /*
-    * 
+    /**
+    * change and track the tool in use
+     * @param canvas for draw tool methods
+     * @param gc for draw tool methods
+     * @param colorPicker1
+     * @param colorLabel
+     * @param selectedTool instance variable that tracks which tool is selected
+     * @param toolLabel
     */
-    public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, Label colorLabel, int selectedTool, Label toolLabel) {
+    public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, 
+            Label colorLabel, int selectedTool, Label toolLabel) {
         switch (selectedTool) {
             case 1:
                 Color color = (Color) gc.getStroke();
@@ -704,6 +720,7 @@ public class PainT extends Application {
                 DrawTool.eyeDropper(canvas, gc);
                 //updates when menu clicked, not canvas clicked
                 toolLabel.setText("Active Tool: " + selectedTool+"\nEyedropper");
+                log = new Log("Menu event", "Eyedropper selected");
                 break;
             case 2:
                 DrawTool.erase(canvas,gc);
@@ -746,6 +763,25 @@ public class PainT extends Application {
                 break;
         }
     }    
+    
+    public void startTask() 
+    {
+        // Create a Runnable
+        Runnable task = new Runnable()
+        {
+            public void run()
+            {
+                logger.logger.info(logger.LogtoString(log));
+            }
+        };
+ 
+        // Run the task in a background thread
+        Thread backgroundThread = new Thread(task);
+        // Terminate the running thread if the application exits
+        backgroundThread.setDaemon(true);
+        // Start the thread
+        backgroundThread.start();
+    } 
 
     public static void main(String[] args) {
         launch(args);
