@@ -2,10 +2,12 @@ package pain.t;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -13,8 +15,11 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
@@ -34,9 +39,9 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -44,15 +49,16 @@ import javafx.stage.Stage;
 
 /*
 new features to implement
-* Draw a square, a rectangle, an ellipse, and a circle, with fill    (don't forget color for inside and the edge of the shape).
-* Undo and redo
-* "Smart" save ("you've made changes...")
 * Multiple image file types (open and save) - at least 3.
 * have an Undo/Redo using an abstract data type ("stack" preferred/recommended); you should not use the FX built in tool!
 * be able to draw a "regular" (same side length) polygon with the user specifying the # of sides.
 * [The Big One] Select a piece of the image and move it.  
 * have a timer that allows for "autosave" [every X seconds, it saves a temporary copy - it should NOT overwrite the existing file if any]; ideally this should be threaded.  
 This timer should be visible/invisible to the user at their option.  X should be something that can be set by the user.  If changed, it should persist on the next use of the software on that machine.]  
+* Logging with (based on) threading is required
+* Select-Copy-paste (versus select-move-and-paste)
+
+Some more: a second one.
 */
 
 public class PainT extends Application {
@@ -72,11 +78,13 @@ public class PainT extends Application {
         ColorPicker colorPicker1 = new ColorPicker();
         colorPicker1.setValue(Color.BLACK);
         //displays rgb values
-        Label colorLabel = new Label("Color: " + colorPicker1.getValue().toString());        
+        Label colorLabel = new Label("Color: " + colorPicker1.getValue().toString());   
+        //displays active tool
+        Label toolLabel = new Label ("Active Tool: " + selectedTool + "\nNone"); 
         
         ToolBar tb = new ToolBar();
         
-        inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Pictures\\default.png"); 
+        inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png"); 
         Image image = new Image(inputstream);
         
         //canvas and context
@@ -118,6 +126,7 @@ public class PainT extends Application {
         MenuItem itemClose = new MenuItem("Close Program");
         MenuItem itemHelp = new MenuItem("Help"); 
         MenuItem itemAbout = new MenuItem("About"); 
+        MenuItem itemSettings = new MenuItem("Settings");
         MenuItem itemSave = new MenuItem("Save File"); //saves as file, fix?
         Menu menuLine = new Menu("Line");
         MenuItem itemResize = new MenuItem("Resize"); 
@@ -128,30 +137,102 @@ public class PainT extends Application {
         CheckMenuItem citemStraightLine = new CheckMenuItem("Straight");
         MenuItem itemText = new MenuItem("Insert Text"); 
         MenuItem itemProject = new MenuItem("New Project");
-        CheckMenuItem citemEyedropper = new CheckMenuItem("Eyedropper Tool"); //if checked, eyedropper is activated
+        CheckMenuItem citemEyedropper = new CheckMenuItem("Eyedropper Tool");
         MenuItem itemUndo = new MenuItem("Undo"); //doesn't do anything yet
+        MenuItem itemRedo = new MenuItem("Redo"); //doesn't do anything yet        
         CheckMenuItem citemRectangle = new CheckMenuItem("Rectangle"); 
         CheckMenuItem citemRoundRect = new CheckMenuItem("Round Rectangle");
         CheckMenuItem citemSquare = new CheckMenuItem("Square");
-        CheckMenuItem citemEllipse = new CheckMenuItem("Ellipses");
+        CheckMenuItem citemEllipse = new CheckMenuItem("Ellipse");
         CheckMenuItem citemErase = new CheckMenuItem("Erase Tool");
+        CheckMenuItem citemCircle = new CheckMenuItem("Circle");
+        CheckMenuItem citemPolygon = new CheckMenuItem("Polygon");
         
         //initialize icons
-        ImageView icon1 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\fileicon.png")));
-        ImageView icon6 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\saveicon.png")));
+        ImageView iconfile = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\fileicon.png")));
+        ImageView iconsave = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\saveicon.png")));
+        ImageView iconclear = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\clearicon.png")));
+        ImageView iconproject = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\projecticon.png")));
+        ImageView iconsettings = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\settingsicon.png")));
+        ImageView iconundo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\undoicon.png")));
+        ImageView iconredo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\redoicon.png")));
+        ImageView iconclose = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\exiticon.png")));
+        ImageView iconhelp = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\helpicon.png")));
+        ImageView iconabout = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\abouticon.png")));
+        ImageView iconline = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\lineicon.png")));
+        ImageView iconline2 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\lineicon.png")));        
+        ImageView iconpencil = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\pencilicon.png")));
+        ImageView iconwidth = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\sizeicon.png")));
+        ImageView iconsize = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\sizeicon.png")));
+        ImageView icontext = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\texticon.png")));
+        ImageView iconeyedropper = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\droppericon.png")));
+        ImageView iconerase = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\eraseicon.png")));
+        ImageView iconshapes = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\shapesicon.png")));        
+        ImageView iconrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\rectangleicon.png")));
+        ImageView iconroundrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\roundrectangleicon.png")));
+        ImageView iconsquare = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\squareicon.png")));
+        ImageView iconellipse = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\ellipseicon.png")));
+        ImageView iconcircle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\circleicon.png")));
+        ImageView iconpolygon = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\polygonicon.png")));
 
         //set icon graphics
-        itemFile.setGraphic(icon1);
-        itemSave.setGraphic(icon6);
+        itemFile.setGraphic(iconfile);
+        itemSave.setGraphic(iconsave);
+        itemClear.setGraphic(iconclear);
+        itemProject.setGraphic(iconproject);
+        itemSettings.setGraphic(iconsettings);
+        itemUndo.setGraphic(iconundo);
+        itemRedo.setGraphic(iconredo);
+        itemClose.setGraphic(iconclose);
+        itemHelp.setGraphic(iconhelp);
+        itemAbout.setGraphic(iconabout);
+        menuLine.setGraphic(iconline);
+        citemStraightLine.setGraphic(iconline2);
+        citemPencil.setGraphic(iconpencil);
+        itemLineWidth.setGraphic(iconwidth);
+        itemResize.setGraphic(iconsize);
+        itemText.setGraphic(icontext);
+        citemEyedropper.setGraphic(iconeyedropper);
+        citemErase.setGraphic(iconerase);
+        menuShapes.setGraphic(iconshapes);
+        citemRectangle.setGraphic(iconrectangle);
+        citemRoundRect.setGraphic(iconroundrectangle);
+        citemSquare.setGraphic(iconsquare);
+        citemEllipse.setGraphic(iconellipse);
+        citemCircle.setGraphic(iconcircle);
+        citemPolygon.setGraphic(iconpolygon);
         
         //set tooltips
-        //itemFile.setTooltip(new Tooltip("Save canvas to file\nKeyboard Shortcut: Alt F"));
         colorPicker1.setTooltip(new Tooltip("Select color to use for lines"));
-        colorLabel.setTooltip(new Tooltip("Displays selected color"));
+        colorLabel.setTooltip(new Tooltip("Displays selected color\n" + colorLabel.getText().toString()));
+        toolLabel.setTooltip(new Tooltip("Displays active tool\n " + toolLabel.getText().toString()));
         tb.setTooltip(new Tooltip("Menu and color picker"));
         tab.setTooltip(new Tooltip("Opened tab"));
-        Tooltip.install(icon1, new Tooltip("Open and select file\nKey: ALT F"));
-        Tooltip.install(icon6, new Tooltip("Save file as\nKey: CTRL S"));
+        Tooltip.install(iconfile, new Tooltip("Open and select file\nKey: ALT F"));
+        Tooltip.install(iconsave, new Tooltip("Save file as\nKey: CTRL S"));
+        Tooltip.install(iconclear, new Tooltip("Clear image to a blank white image"));
+        Tooltip.install(iconproject, new Tooltip("Open a new tab"));
+        Tooltip.install(iconsettings, new Tooltip("Open basic settings options"));
+        Tooltip.install(iconundo, new Tooltip("Undo last action"));
+        Tooltip.install(iconredo, new Tooltip("Redo last deleted action"));  
+        Tooltip.install(iconclose, new Tooltip("Close the program"));
+        Tooltip.install(iconhelp, new Tooltip("Help finding tools and shortcuts")); 
+        Tooltip.install(iconabout, new Tooltip("Short about description")); 
+        Tooltip.install(iconline, new Tooltip("Set line width and select straight or pencil line tools"));
+        Tooltip.install(iconline2, new Tooltip("Draw a straight line")); 
+        Tooltip.install(iconpencil, new Tooltip("Draw a freehand pencil line")); 
+        Tooltip.install(iconwidth, new Tooltip("Change the width of the line")); 
+        Tooltip.install(iconsize, new Tooltip("Change the height and width of the drawing canvas"));     
+        Tooltip.install(icontext, new Tooltip("Insert text onto the canvas")); 
+        Tooltip.install(iconeyedropper, new Tooltip("Click on the canvas to get that pixel's color")); 
+        Tooltip.install(iconerase, new Tooltip("erase drawings and image on the canvas")); 
+        Tooltip.install(iconshapes, new Tooltip("Select a shape from a menu")); 
+        Tooltip.install(iconrectangle, new Tooltip("Draw a rectangle onto the canvas")); 
+        Tooltip.install(iconroundrectangle, new Tooltip("Draw a round rectangle onto the canvas")); 
+        Tooltip.install(iconsquare, new Tooltip("Draw a square onto the canvas")); 
+        Tooltip.install(iconellipse, new Tooltip("Draw an ellipse onto the canvas")); 
+        Tooltip.install(iconcircle, new Tooltip("Draw a circle onto the canvas")); 
+        Tooltip.install(iconpolygon, new Tooltip("Draw a polygon onto the canvas")); 
         
         //help menu item event
         itemHelp.setOnAction((ActionEvent t) -> {
@@ -159,7 +240,7 @@ public class PainT extends Application {
             Dialog response = dialog;
             dialog.setTitle("Help");
             dialog.setContentText("Help\n\nOptions tab: select and save files. You can clear image, "
-                    + "create a new project (not functional), and undo (not functional) here too."
+                    + "create a new project (not functional), access settings, undo and redo (not functional)."
                     + "\nDraw tab: draw lines and shapes on image. Resize, text, eyedropper, and eraser tool are present here too. "
                     + "\nSelect color with color picker on the right. Bottom left displays the color."
                     + "\nScroll bars appear when the image is bigger than the screen.\nYou can zoom in and out using the slider at the bottom."
@@ -174,7 +255,7 @@ public class PainT extends Application {
             Dialog<String> dialog = new Dialog<String>();
             Dialog response = dialog;
             dialog.setTitle("Help");
-            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.5\nAuthor: Mackenzie Albright");            
+            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.6\nAuthor: Mackenzie Albright");            
             ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
             dialog.getDialogPane().getButtonTypes().add(close);                       
             dialog.showAndWait();
@@ -213,7 +294,23 @@ public class PainT extends Application {
         
         //exit program when item 2 is clicked
         itemClose.setOnAction((ActionEvent t) -> {
-            System.exit(0);
+            //System.exit(0);
+            if (!findChange(canvas)) {
+                Platform.exit();
+            } else {
+                ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+                ButtonType dontsave = new ButtonType("Don't save", ButtonBar.ButtonData.CANCEL_CLOSE);
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,"save", save, dontsave);
+                alert.setTitle("Do you wish to save?");
+                alert.setContentText("A change has been made to the canvas. Do you wish to save?");
+                
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.get() == dontsave) {
+                    Platform.exit();
+                } else {
+                    System.out.println(alert.getButtonTypes().toString());
+                }
+            }
         });
 
         //open file when item 1 is clicked
@@ -238,10 +335,10 @@ public class PainT extends Application {
             @Override
             public void handle(ActionEvent t) {
                 try {
-                    inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Pictures\\default.png");
+                    inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png");
                     Image image = new Image(inputstream);
                     gc.drawImage(image, 0, 0);
-                    Undo.push(t);
+                    //Undo.push(t);
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(PainT.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -266,18 +363,15 @@ public class PainT extends Application {
             }
         });        
                
-        //action event for eyedropper
-        citemEyedropper.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
+        //action event for eyedropper     
+        citemEyedropper.setOnAction(e -> {
                 if (citemEyedropper.isSelected()) {
                     selectedTool = 1; }
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
-            }            
-        });             
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);            
+        });
         
         //open input text dialog to enter specified line width
         itemLineWidth.setOnAction(new EventHandler<ActionEvent>() {
@@ -310,12 +404,21 @@ public class PainT extends Application {
         citemErase.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                if (selectedTool == 2) {
+                    selectedTool = 0;
+                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+                }
+                else {
+                    selectedTool = 2;
+                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+                }
+                /*
                 if (citemErase.isSelected()) {
                     selectedTool = 2; }
                 else {
                     selectedTool = 0; }
 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);*/
             }            
         });        
         
@@ -328,7 +431,7 @@ public class PainT extends Application {
                 else { 
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });
         
@@ -341,7 +444,7 @@ public class PainT extends Application {
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });        
         
@@ -354,7 +457,7 @@ public class PainT extends Application {
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });
         
@@ -367,7 +470,7 @@ public class PainT extends Application {
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });            
         
@@ -380,7 +483,7 @@ public class PainT extends Application {
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });
         
@@ -389,13 +492,39 @@ public class PainT extends Application {
             @Override
             public void handle(ActionEvent event) {
                 if (citemEllipse.isSelected()) {
-                    selectedTool = 7; }
+                    selectedTool = 8; }
                 else {
                     selectedTool = 0; }
                 
-                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });         
+        
+        //action event for circle tool
+        citemCircle.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (citemCircle.isSelected()) {
+                    selectedTool = 9; }
+                else {
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+            }
+        });      
+        
+        //action event for polygon tool
+        citemPolygon.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (citemPolygon.isSelected()) {
+                    selectedTool = 10; }
+                else {
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
+            }
+        });                        
         
         //zoom slider tool
         Slider slider = new Slider();
@@ -405,11 +534,11 @@ public class PainT extends Application {
         slider.setShowTickMarks(true);
         slider.setMajorTickUnit(50);
         slider.setMinorTickCount(5);
-        slider.setBlockIncrement(10);
+        slider.setBlockIncrement(100);
         //improve, scales out very far, slider in weird place, scroll pane doesn't interact with it, etc etc
         final Tooltip tooltip = new Tooltip();
         //add zoom action and tooltip to slider
-        slider.valueProperty().addListener(new ChangeListener<Number>() {
+        slider.valueProperty().addListener(new ChangeListener<Number>() { //affect scrollpane too
             public void changed(ObservableValue<? extends Number> ov,
                 Number old_val, Number new_val) {
                     canvas.setScaleX(new_val.doubleValue());
@@ -418,12 +547,13 @@ public class PainT extends Application {
                     slider.setTooltip(tooltip);
             }
         });        
-               
+                       
         //add menu items
         menuOpt.getItems().add(itemFile);
         menuOpt.getItems().add(itemSave);
         menuOpt.getItems().add(itemClear);
         menuOpt.getItems().add(itemProject);
+        menuOpt.getItems().add(itemSettings);
         menuClose.getItems().add(itemClose);
         menuDraw.getItems().add(menuLine);
         menuHelp.getItems().add(itemHelp);
@@ -436,11 +566,14 @@ public class PainT extends Application {
         menuDraw.getItems().add(itemText);
         menuDraw.getItems().add(citemEyedropper);
         menuOpt.getItems().add(itemUndo);
+        menuOpt.getItems().add(itemRedo);
         menuShapes.getItems().add(citemRectangle);
         menuShapes.getItems().add(citemRoundRect);
         menuShapes.getItems().add(citemSquare);
         menuShapes.getItems().add(citemEllipse);
         menuDraw.getItems().add(citemErase);
+        menuShapes.getItems().add(citemCircle);
+        menuShapes.getItems().add(citemPolygon);
         
         //add menu and image view to vbox and center vbox        
         VBox vBox = new VBox();       
@@ -455,9 +588,17 @@ public class PainT extends Application {
         pane.getChildren().add(slider);
         pane.setConstraints(colorLabel,0,1);
         pane.getChildren().add(colorLabel);
-
+        pane.setConstraints(toolLabel,0,1);
+        toolLabel.setTranslateX(250);
+        pane.getChildren().add(toolLabel);
+        
         //set scene
-        Scene scene = new Scene(pane, canvas.getWidth()+10, canvas.getHeight()+125);   
+        Scene scene = new Scene(pane, canvas.getWidth()+10, canvas.getHeight()+175);  
+        
+        //settings menu item event
+        itemSettings.setOnAction((ActionEvent t) -> {
+            customDBox dialog = new customDBox(scroll, canvas, scene, primaryStage);
+        });        
         
         /*
         * add keyboard controls to scene
@@ -491,7 +632,7 @@ public class PainT extends Application {
                 selectedTool = 2;
             }
             
-            selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+            selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
         });
         
         
@@ -515,9 +656,45 @@ public class PainT extends Application {
         }    
         
     /*
+    * finds if a change was made to the default canvas
+    * opens a confirmation box before closing program
+    * @param canvas canvas to compare
+    */
+    public boolean findChange(Canvas canvas) {
+        boolean isChanged = false;
+        try { 
+            inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png");
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(PainT.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Image image = new Image(inputstream);        
+        
+        SnapshotParameters params = new SnapshotParameters();
+        WritableImage wi = canvas.snapshot(params, null);
+        //doesn't work
+        //compare snapshot to default image to detect if a change was made to the canvas
+        try {
+            for(int x = 0; x < wi.getWidth(); x++){
+                for(int y = 0; y < wi.getHeight(); y++){
+                    if (!wi.getPixelReader().getColor(x,y).equals(image.getPixelReader().getColor(x,y))) {
+                        isChanged = true;
+                    }
+                }
+            }            
+        } catch(Exception IndexOutOfBounds) {
+            isChanged = true;
+        }
+        //condition if resized smaller
+        if (wi.getWidth() < image.getWidth() || wi.getHeight() < image.getHeight()) {
+            isChanged = true;
+        }
+        return isChanged;
+    }
+    
+    /*
     * 
     */
-    public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, Label colorLabel, int selectedTool) {
+    public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, Label colorLabel, int selectedTool, Label toolLabel) {
         switch (selectedTool) {
             case 1:
                 Color color = (Color) gc.getStroke();
@@ -526,29 +703,46 @@ public class PainT extends Application {
                 colorLabel.setText("Color: " + color.toString()); 
                 DrawTool.eyeDropper(canvas, gc);
                 //updates when menu clicked, not canvas clicked
+                toolLabel.setText("Active Tool: " + selectedTool+"\nEyedropper");
                 break;
             case 2:
                 DrawTool.erase(canvas,gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nEraser");                
                 break;
             case 3:
                 DrawTool.pencil(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nPencil");
                 break;
             case 4:
                 DrawTool.straightLine(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nLine");
                 break;
             case 5:
                 DrawTool.rectangle(canvas,gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nRectangle");
                 break;
             case 6:
                 DrawTool.roundRectangle(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nRounded Rectangle");
                 break;
             case 7:
                 DrawTool.square(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nSquare");
                 break;
             case 8:
                 DrawTool.ellipse(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nEllipse");
                 break;
+            case 9:
+                DrawTool.circle(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nCircle");
+                break;
+            case 10:
+                DrawTool.polygon(canvas, gc);
+                toolLabel.setText("Active Tool: " + selectedTool+"\nPolygon");
+                break;                
             default:
+                toolLabel.setText("Active Tool: " + selectedTool+"\nNone");
                 break;
         }
     }    
