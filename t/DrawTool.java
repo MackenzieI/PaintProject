@@ -11,6 +11,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 
 public class DrawTool {
+    
+    //should make shapes open a dialog box prompting for edge and fill color
+    //etc
+    
+    
         /*
         * Draw a straight line onto the canvas. Live draw not yet supported.
         * @ param canvas takes a canvas
@@ -153,7 +158,42 @@ public class DrawTool {
                     }
             });
         }
-                
+            
+        /*
+        * Draw an circle onto the canvas. 
+        * @ param canvas takes a canvas
+        * @ param gc takes a graphics context
+        */
+        static public void circle(Canvas canvas, GraphicsContext gc) {
+            //try using strokearc
+            //can only stroke to the right
+            //fills left like a square
+            canvas.addEventHandler(MouseEvent.ANY,
+                new EventHandler<MouseEvent>() {
+                    double x1, y1, x2, y2, w, h;
+
+                    @Override
+                    public void handle(MouseEvent event) {
+                        switch (event.getEventType().getName()) {
+                            /*
+                            case "MOUSE_PRESSED":
+                                x1 = event.getX();
+                                y1 = event.getY();
+                            case "MOUSE_DRAGGED":
+                                x2 = event.getX();
+                                y2 = event.getY();
+
+                            case "MOUSE_RELEASED":
+                                w = x2 - x1;
+                                h = y2 = y1;
+                                gc.strokeOval(x1, y1, w, h);
+                                gc.fillOval(x1, y1, w, h);
+                            */
+                        }
+                    }
+            });
+        }        
+        
         /*
         * Draw a rounded rectangle onto the canvas. 
         * @ param canvas takes a canvas
@@ -266,7 +306,7 @@ public class DrawTool {
         }
         
         //pick color for eyedropper
-        static Color readColor(Canvas canvas, double x, double y) {
+        static private Color readColor(Canvas canvas, double x, double y) {
             //user clicks on canvas and return color clicked 
             WritableImage image = new WritableImage((int)canvas.getWidth(),(int)canvas.getHeight());
             SnapshotParameters sp = new SnapshotParameters();
