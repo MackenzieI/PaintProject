@@ -13,7 +13,6 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -34,8 +33,7 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -47,22 +45,20 @@ import javafx.stage.Stage;
 /*
 new features to implement
 * Draw a square, a rectangle, an ellipse, and a circle, with fill    (don't forget color for inside and the edge of the shape).
+* Undo and redo
 * "Smart" save ("you've made changes...")
 * Multiple image file types (open and save) - at least 3.
-* Color "grabber"/dropper tool.
 * have an Undo/Redo using an abstract data type ("stack" preferred/recommended); you should not use the FX built in tool!
 * be able to draw a "regular" (same side length) polygon with the user specifying the # of sides.
 * [The Big One] Select a piece of the image and move it.  
-* have at least 3 unit tests.  (More info coming in class...)
 * have a timer that allows for "autosave" [every X seconds, it saves a temporary copy - it should NOT overwrite the existing file if any]; ideally this should be threaded.  
 This timer should be visible/invisible to the user at their option.  X should be something that can be set by the user.  If changed, it should persist on the next use of the software on that machine.]  
-* have icons for tools
-* have mouseover help for controls (if a icons+text as the tool, a short explanation is sufficient - if icons only were used, just a text name is sufficient)
 */
 
 public class PainT extends Application {
     //global variables
     FileInputStream inputstream;
+    int selectedTool;
     
     //undo stack
     static Stack<Event> Undo = new Stack<Event>();
@@ -70,6 +66,7 @@ public class PainT extends Application {
         
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
+        selectedTool = 0;
         GridPane pane = new GridPane();
         //create color picker and set value to default to black
         ColorPicker colorPicker1 = new ColorPicker();
@@ -104,60 +101,80 @@ public class PainT extends Application {
         scroll.setPannable(true); //add feature to allow user to opt out of panning
         scroll.setContent(canvas);
         //create menu and menubar
-        Menu menu1 = new Menu("Options");
-        Menu menu2 = new Menu("Draw"); 
-        Menu menu3 = new Menu("Close");
-        Menu menu4 = new Menu("Help");
+        Menu menuOpt = new Menu("Options");
+        Menu menuDraw = new Menu("Draw"); 
+        Menu menuClose = new Menu("Close");
+        Menu menuHelp = new Menu("Help");
         MenuBar menuBar = new MenuBar();
-        menuBar.getMenus().add(menu1);
-        menuBar.getMenus().add(menu2);
-        menuBar.getMenus().add(menu3);
-        menuBar.getMenus().add(menu4);
+        menuBar.getMenus().add(menuOpt);
+        menuBar.getMenus().add(menuDraw);
+        menuBar.getMenus().add(menuClose);
+        menuBar.getMenus().add(menuHelp);
         //add items to toolbar
         tb.getItems().add(menuBar);
         tb.getItems().add(colorPicker1);
         //add items to menu
-        Menu menuItem1 = new Menu("Select File  ALT F");
-        MenuItem menuItem2 = new MenuItem("Close Program");
-        MenuItem menuItem4 = new MenuItem("Help"); 
-        MenuItem menuItem5 = new MenuItem("About"); 
-        MenuItem menuItem6 = new MenuItem("Save File    CTRL S"); //saves as file, fix?
-        Menu menuItem7 = new Menu("Line");
-        MenuItem menuItem8 = new MenuItem("Resize"); 
-        Menu menuItem9 = new Menu("Shapes"); //doesn't do anything yet
-        MenuItem menuItem10 = new MenuItem("Clear Image");         
-        MenuItem menuItem11 = new MenuItem("Width"); 
-        CheckMenuItem menuItemP = new CheckMenuItem("Pencil");
-        CheckMenuItem menuItemS = new CheckMenuItem("Straight");
-        MenuItem menuItem12 = new MenuItem("Insert Text"); 
-        MenuItem menuItem13 = new MenuItem("New Project");
-        CheckMenuItem menuItem14 = new CheckMenuItem("Eyedropper Tool"); //if checked, eyedropper is activated
-        MenuItem menuItem15 = new MenuItem("Undo"); //doesn't do anything yet
-        CheckMenuItem menuItem16 = new CheckMenuItem("Rectangle"); 
-        CheckMenuItem menuItem17 = new CheckMenuItem("Round Rectangle");
-        CheckMenuItem menuItem18 = new CheckMenuItem("Square");
-        CheckMenuItem menuItem19 = new CheckMenuItem("Ellipses");
-        CheckMenuItem menuItem20 = new CheckMenuItem("Erase Tool");
+        Menu itemFile = new Menu("Select File");
+        MenuItem itemClose = new MenuItem("Close Program");
+        MenuItem itemHelp = new MenuItem("Help"); 
+        MenuItem itemAbout = new MenuItem("About"); 
+        MenuItem itemSave = new MenuItem("Save File"); //saves as file, fix?
+        Menu menuLine = new Menu("Line");
+        MenuItem itemResize = new MenuItem("Resize"); 
+        Menu menuShapes = new Menu("Shapes"); 
+        MenuItem itemClear = new MenuItem("Clear Image");         
+        MenuItem itemLineWidth = new MenuItem("Width"); 
+        CheckMenuItem citemPencil = new CheckMenuItem("Pencil");
+        CheckMenuItem citemStraightLine = new CheckMenuItem("Straight");
+        MenuItem itemText = new MenuItem("Insert Text"); 
+        MenuItem itemProject = new MenuItem("New Project");
+        CheckMenuItem citemEyedropper = new CheckMenuItem("Eyedropper Tool"); //if checked, eyedropper is activated
+        MenuItem itemUndo = new MenuItem("Undo"); //doesn't do anything yet
+        CheckMenuItem citemRectangle = new CheckMenuItem("Rectangle"); 
+        CheckMenuItem citemRoundRect = new CheckMenuItem("Round Rectangle");
+        CheckMenuItem citemSquare = new CheckMenuItem("Square");
+        CheckMenuItem citemEllipse = new CheckMenuItem("Ellipses");
+        CheckMenuItem citemErase = new CheckMenuItem("Erase Tool");
+        
+        //initialize icons
+        ImageView icon1 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\fileicon.png")));
+        ImageView icon6 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\saveicon.png")));
+
+        //set icon graphics
+        itemFile.setGraphic(icon1);
+        itemSave.setGraphic(icon6);
+        
+        //set tooltips
+        //itemFile.setTooltip(new Tooltip("Save canvas to file\nKeyboard Shortcut: Alt F"));
+        colorPicker1.setTooltip(new Tooltip("Select color to use for lines"));
+        colorLabel.setTooltip(new Tooltip("Displays selected color"));
+        tb.setTooltip(new Tooltip("Menu and color picker"));
+        tab.setTooltip(new Tooltip("Opened tab"));
+        Tooltip.install(icon1, new Tooltip("Open and select file\nKey: ALT F"));
+        Tooltip.install(icon6, new Tooltip("Save file as\nKey: CTRL S"));
         
         //help menu item event
-        menuItem4.setOnAction((ActionEvent t) -> {
+        itemHelp.setOnAction((ActionEvent t) -> {
             Dialog<String> dialog = new Dialog<String>();
             Dialog response = dialog;
             dialog.setTitle("Help");
-            dialog.setContentText("Help\n\nOptions tab: select and save files."
-                    + "\nDraw tab: draw lines on image.\nSelect color with color picker on the right."
+            dialog.setContentText("Help\n\nOptions tab: select and save files. You can clear image, "
+                    + "create a new project (not functional), and undo (not functional) here too."
+                    + "\nDraw tab: draw lines and shapes on image. Resize, text, eyedropper, and eraser tool are present here too. "
+                    + "\nSelect color with color picker on the right. Bottom left displays the color."
                     + "\nScroll bars appear when the image is bigger than the screen.\nYou can zoom in and out using the slider at the bottom."
-                    + "\n\nKeyboard Shortcuts\ncontrol s: save\nalt f: open file\ncontrol r: resize");  
+                    + "\n\nKeyboard Shortcuts\nCTRL S: save\nALT F: open file\nCTRL R: resize\nESC: exit\nSHIFT E: erase");  
             ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
             dialog.getDialogPane().getButtonTypes().add(close);               
             dialog.showAndWait();
-        });
+        }); 
+        
         //about menu item event
-        menuItem5.setOnAction((ActionEvent t) -> {
+        itemAbout.setOnAction((ActionEvent t) -> {
             Dialog<String> dialog = new Dialog<String>();
             Dialog response = dialog;
             dialog.setTitle("Help");
-            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.4\nAuthor: Mackenzie Albright");            
+            dialog.setContentText("About\n\nProgram: Paint\nVersion 1.5\nAuthor: Mackenzie Albright");            
             ButtonType close = new ButtonType("Ok", ButtonData.OK_DONE);
             dialog.getDialogPane().getButtonTypes().add(close);                       
             dialog.showAndWait();
@@ -168,7 +185,7 @@ public class PainT extends Application {
         * user enters text that is turned into a text object
         * on the image. not fully implemented yet
         */
-        menuItem12.setOnAction((ActionEvent event) -> {
+        itemText.setOnAction((ActionEvent event) -> {
             TextInputDialog dialog = new TextInputDialog();
             dialog.getEditor().setText("Enter Text");
             dialog.setTitle("Insert text");
@@ -186,7 +203,7 @@ public class PainT extends Application {
         });
         //open new tab when item 13 is clicked
         //doesn't work yet
-        menuItem13.setOnAction((ActionEvent event) -> {
+        itemProject.setOnAction((ActionEvent event) -> {
             Tab tab2 = new Tab();
             tab.setText("new tab");
             //tab.setContent(null);
@@ -195,29 +212,29 @@ public class PainT extends Application {
         });
         
         //exit program when item 2 is clicked
-        menuItem2.setOnAction((ActionEvent t) -> {
+        itemClose.setOnAction((ActionEvent t) -> {
             System.exit(0);
         });
 
         //open file when item 1 is clicked
-        menuItem1.setOnAction(new EventHandler<ActionEvent>() {
+        itemFile.setOnAction(new EventHandler<ActionEvent>() {
         //open file explorer and set it to image display when item 1 is clicked
             @Override
             public void handle(ActionEvent event) {
-                pain.t.PaintMethods.file(primaryStage, canvas, gc);
+                PaintMethods.file(primaryStage, canvas, gc);
                 Undo.push(event);
         }});            
         //save/save as action event
-        menuItem6.setOnAction(new EventHandler<ActionEvent>() {
+        itemSave.setOnAction(new EventHandler<ActionEvent>() {
             
             @Override
             public void handle(ActionEvent event) {
-                pain.t.PaintMethods.save(primaryStage, canvas);
+                PaintMethods.save(primaryStage, canvas);
                 Undo.push(event);
             }
         });        
         //clear image when clear image menu item is clicked
-        menuItem10.setOnAction(new EventHandler<ActionEvent>() {
+        itemClear.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
                 try {
@@ -231,10 +248,10 @@ public class PainT extends Application {
             }
         });        
         //resize
-        menuItem8.setOnAction(new EventHandler<ActionEvent>() {
+        itemResize.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                pain.t.PaintMethods.resize(canvas);    
+                PaintMethods.resize(canvas);    
                 Undo.push(event);
             }
         });
@@ -250,27 +267,20 @@ public class PainT extends Application {
         });        
                
         //action event for eyedropper
-        menuItem14.setOnAction(new EventHandler<ActionEvent>() {
+        citemEyedropper.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem14.isSelected()) {
-                    pain.t.DrawTool.eyeDropper(canvas, gc);
-                    Color color;
-                    color = (Color) gc.getStroke();
-                    Undo.push(event);
-                    //try to get color from gc
-                    colorPicker1.setValue(color);
-                    colorLabel.setText("Color: " + color.toString()); 
-                    //not changing to selected color
-                }
+                if (citemEyedropper.isSelected()) {
+                    selectedTool = 1; }
                 else {
-                    //nothing
-                }
-            }
-        });        
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
+            }            
+        });             
         
         //open input text dialog to enter specified line width
-        menuItem11.setOnAction(new EventHandler<ActionEvent>() {
+        itemLineWidth.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
                 TextInputDialog td = new TextInputDialog("Enter line width and press enter and ok.");
@@ -287,10 +297,8 @@ public class PainT extends Application {
             }
         });           
         
-        
-        
         //action event for undo
-        menuItem15.setOnAction(new EventHandler<ActionEvent>() {
+        itemUndo.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 UNDO(Undo, Redo);
@@ -299,107 +307,95 @@ public class PainT extends Application {
         });
                 
         //action event for erase tool 
-        menuItem20.setOnAction(new EventHandler<ActionEvent>() {
+        citemErase.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (((CheckMenuItem)event.getSource()).isSelected()) {
-                    pain.t.DrawTool.erase(canvas, gc);
-                    Undo.push(event);
-                }
-                else
-                    ;
+                if (citemErase.isSelected()) {
+                    selectedTool = 2; }
+                else {
+                    selectedTool = 0; }
+
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }            
         });        
         
         //action event for pencil tool
-        menuItemP.setOnAction(new EventHandler<ActionEvent>() {
+        citemPencil.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(ActionEvent e)
-            {
-                if (menuItemP.isSelected()) {
-                    pain.t.DrawTool.pencil(canvas, gc);
-                    Undo.push(e);
-                }
-                else
-                    ;
+            public void handle(ActionEvent event) {
+                if (citemPencil.isSelected()) {
+                    selectedTool = 3; }
+                else { 
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });
         
         //action event for straight line tool
-        menuItemS.setOnAction(new EventHandler<ActionEvent>() {
+        citemStraightLine.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItemS.isSelected()) {
-                    pain.t.DrawTool.straightLine(canvas,gc);
-                    Undo.push(event);
-                }
+                if (citemStraightLine.isSelected()) {
+                    selectedTool = 4; }
                 else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });        
         
         //action event for rectangle tool
-        menuItem16.setOnAction(new EventHandler<ActionEvent>() {
+        citemRectangle.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem16.isSelected()) {
-                    pain.t.DrawTool.rectangle(canvas, gc);
-                    Undo.push(event);
-                }
+                if (citemRectangle.isSelected()) {
+                    selectedTool = 5; }
                 else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });
         
         //action event for round rectangle tool
-        menuItem17.setOnAction(new EventHandler<ActionEvent>() {
+        citemRoundRect.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem17.isSelected()) {
-                    pain.t.DrawTool.roundRectangle(canvas,gc);
-                    Undo.push(event);
-                }
+                if (citemRoundRect.isSelected()) {
+                    selectedTool = 6; }
                 else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });            
         
         //action event for square tool
-        menuItem18.setOnAction(new EventHandler<ActionEvent>() {
+        citemSquare.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem18.isSelected()) {
-                    pain.t.DrawTool.square(canvas, gc);
-                    Undo.push(event);
-                }
+                if (citemSquare.isSelected()) {
+                    selectedTool = 7; }
                 else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });
         
         //action event for ellipse tool
-        menuItem19.setOnAction(new EventHandler<ActionEvent>() {
+        citemEllipse.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (menuItem19.isSelected()) {
-                    pain.t.DrawTool.ellipse(canvas,gc);
-                    Undo.push(event);
-                }
+                if (citemEllipse.isSelected()) {
+                    selectedTool = 7; }
                 else {
-                    //nothing
-                    //doesn't deselect when it should?
-                }
+                    selectedTool = 0; }
+                
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
             }
         });         
-
         
         //zoom slider tool
         Slider slider = new Slider();
@@ -418,34 +414,33 @@ public class PainT extends Application {
                 Number old_val, Number new_val) {
                     canvas.setScaleX(new_val.doubleValue());
                     canvas.setScaleY(new_val.doubleValue());
-                    tooltip.setText(String.format("%.2f", new_val));
+                    tooltip.setText(String.format("Zoom percent: %.2f", new_val));
                     slider.setTooltip(tooltip);
             }
         });        
-                
-        
+               
         //add menu items
-        menu1.getItems().add(menuItem1);
-        menu1.getItems().add(menuItem6);
-        menu1.getItems().add(menuItem10);
-        menu1.getItems().add(menuItem13);
-        menu3.getItems().add(menuItem2);
-        menu2.getItems().add(menuItem7);
-        menu4.getItems().add(menuItem4);
-        menu4.getItems().add(menuItem5);
-        menu2.getItems().add(menuItem9);
-        menu2.getItems().add(menuItem8);
-        menuItem7.getItems().add(menuItem11);
-        menuItem7.getItems().add(menuItemP);
-        menuItem7.getItems().add(menuItemS);
-        menu2.getItems().add(menuItem12);
-        menu2.getItems().add(menuItem14);
-        menu1.getItems().add(menuItem15);
-        menuItem9.getItems().add(menuItem16);
-        menuItem9.getItems().add(menuItem17);
-        menuItem9.getItems().add(menuItem18);
-        menuItem9.getItems().add(menuItem19);
-        menu2.getItems().add(menuItem20);
+        menuOpt.getItems().add(itemFile);
+        menuOpt.getItems().add(itemSave);
+        menuOpt.getItems().add(itemClear);
+        menuOpt.getItems().add(itemProject);
+        menuClose.getItems().add(itemClose);
+        menuDraw.getItems().add(menuLine);
+        menuHelp.getItems().add(itemHelp);
+        menuHelp.getItems().add(itemAbout);
+        menuDraw.getItems().add(menuShapes);
+        menuDraw.getItems().add(itemResize);
+        menuLine.getItems().add(itemLineWidth);
+        menuLine.getItems().add(citemPencil);
+        menuLine.getItems().add(citemStraightLine);
+        menuDraw.getItems().add(itemText);
+        menuDraw.getItems().add(citemEyedropper);
+        menuOpt.getItems().add(itemUndo);
+        menuShapes.getItems().add(citemRectangle);
+        menuShapes.getItems().add(citemRoundRect);
+        menuShapes.getItems().add(citemSquare);
+        menuShapes.getItems().add(citemEllipse);
+        menuDraw.getItems().add(citemErase);
         
         //add menu and image view to vbox and center vbox        
         VBox vBox = new VBox();       
@@ -462,7 +457,8 @@ public class PainT extends Application {
         pane.getChildren().add(colorLabel);
 
         //set scene
-        Scene scene = new Scene(pane, 600, 600);    
+        Scene scene = new Scene(pane, canvas.getWidth()+10, canvas.getHeight()+125);   
+        
         /*
         * add keyboard controls to scene
         * @ inputs control s: save
@@ -473,28 +469,31 @@ public class PainT extends Application {
         */
         scene.addEventHandler(KeyEvent.KEY_PRESSED, (key) -> {
             if(key.getCode()==KeyCode.S && key.isControlDown()) {
-                pain.t.PaintMethods.save(primaryStage, canvas);
+                PaintMethods.save(primaryStage, canvas);
             }
             if(key.getCode()==KeyCode.F && key.isAltDown()) {
-                pain.t.PaintMethods.file(primaryStage,canvas, gc);
+                PaintMethods.file(primaryStage,canvas, gc);
             }
             if(key.getCode()==KeyCode.R && key.isControlDown()) {
-                pain.t.PaintMethods.resize(canvas);
+                PaintMethods.resize(canvas);
             }        
             if(key.getCode()==KeyCode.ESCAPE) {
                 System.exit(0);
             }
             //bug present here too in the drawing tools
             if(key.getCode()==KeyCode.N) {
-                pain.t.DrawTool.pencil(canvas, gc);
+                selectedTool = 3;
             }
             if(key.getCode()==KeyCode.L) {
-                pain.t.DrawTool.straightLine(canvas, gc);
+                selectedTool = 4;
             }            
             if(key.getCode()==KeyCode.E && key.isShiftDown()) {
-                pain.t.DrawTool.erase(canvas, gc);
+                selectedTool = 2;
             }
+            
+            selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool);
         });
+        
         
         primaryStage.setTitle("Pain(t)");
         primaryStage.setScene(scene);
@@ -502,7 +501,6 @@ public class PainT extends Application {
         primaryStage.show();
 
     } 
-
 
     /*
     * @param Undo take a stack Undo and pop it from the list
@@ -516,6 +514,45 @@ public class PainT extends Application {
             Redo.push(X);
         }    
         
+    /*
+    * 
+    */
+    public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, Label colorLabel, int selectedTool) {
+        switch (selectedTool) {
+            case 1:
+                Color color = (Color) gc.getStroke();
+                //try to get color from gc
+                colorPicker1.setValue(color);
+                colorLabel.setText("Color: " + color.toString()); 
+                DrawTool.eyeDropper(canvas, gc);
+                //updates when menu clicked, not canvas clicked
+                break;
+            case 2:
+                DrawTool.erase(canvas,gc);
+                break;
+            case 3:
+                DrawTool.pencil(canvas, gc);
+                break;
+            case 4:
+                DrawTool.straightLine(canvas, gc);
+                break;
+            case 5:
+                DrawTool.rectangle(canvas,gc);
+                break;
+            case 6:
+                DrawTool.roundRectangle(canvas, gc);
+                break;
+            case 7:
+                DrawTool.square(canvas, gc);
+                break;
+            case 8:
+                DrawTool.ellipse(canvas, gc);
+                break;
+            default:
+                break;
+        }
+    }    
+
     public static void main(String[] args) {
         launch(args);
     }    
