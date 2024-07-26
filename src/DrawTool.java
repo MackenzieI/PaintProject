@@ -10,6 +10,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javax.swing.undo.UndoManager;
+import javafx.scene.control.ColorPicker;
 
 public class DrawTool {    
     //track events
@@ -30,6 +31,19 @@ public class DrawTool {
                         gc.strokeLine(x1, y1, x2, y2);
                 }        }
     };*/
+
+    private static EventHandler<MouseEvent> currentHandler = null;
+
+    /**
+     * Removes the current EventHandlers in use from canvas.
+     * @param canvas takes a canvas
+     */
+    public static void removeHandler(Canvas canvas) {
+        if (currentHandler != null) {
+            canvas.removeEventHandler(MouseEvent.ANY, currentHandler);
+            currentHandler = null;
+        }
+    }
     
     UndoManager undoM = new UndoManager();
     
@@ -40,7 +54,7 @@ public class DrawTool {
     */
      static public void straightLine(Canvas canvas, GraphicsContext gc) {  
          
-        canvas.addEventHandler(MouseEvent.ANY, new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> sLineHandler = new EventHandler<MouseEvent>() {
         double x1, y1, x2, y2;
         //GraphicsContext gc;
         @Override
@@ -56,19 +70,25 @@ public class DrawTool {
                     gc.strokeLine(x1, y1, x2, y2); 
                 }
             }
-        });
+        };
+
+         // Store the handler
+         currentHandler = sLineHandler;
+         canvas.addEventHandler(MouseEvent.ANY, sLineHandler);
      }
         
     /**
     * Draw a freehand/pencil tool line onto the canvas. 
     * @param canvas takes a canvas
     * @param gc takes a graphics context
+    * @param colorPicker the color picker to get the current color
     */
-    static public void pencil(Canvas canvas, GraphicsContext gc) {            
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+    static public void pencil(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker) {
+        EventHandler<MouseEvent> pencilHandler = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                gc.setStroke(colorPicker.getValue());
+                gc.setLineWidth(1);
                 switch (event.getEventType().getName()) {
                     case "MOUSE_PRESSED":
                         gc.beginPath();
@@ -81,18 +101,20 @@ public class DrawTool {
                 }         
                 //canvas.setOnMousePressed(line);
             }
-        });
+        };
+        // Store the handler
+        currentHandler = pencilHandler;
+        canvas.addEventHandler(MouseEvent.ANY, pencilHandler);
     }                     
                 
-    /*
+    /**
     * Draw a rectangle onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static public void rectangle(Canvas canvas, GraphicsContext gc) {
         //can only stroke to the right
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> rectHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, w, h;
             customDBox dbox = new customDBox(gc);
             
@@ -112,18 +134,20 @@ public class DrawTool {
                         gc.fillRect(x1, y1, w, h);
                 }
             }
-        });
+        };
+        // Store the handler
+        currentHandler = rectHandler;
+        canvas.addEventHandler(MouseEvent.ANY, rectHandler);
     }
             
-    /*
+    /**
     * Draw a square onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static public void square(Canvas canvas, GraphicsContext gc) {
         //can only stroke to the right
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> squareHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, w, h;
             customDBox dbox = new customDBox(gc);
 
@@ -143,20 +167,22 @@ public class DrawTool {
                         gc.fillRect(x1, y1, w, w);
                 }
             }
-        });
+        };
+        // Store the handler
+        currentHandler = squareHandler;
+        canvas.addEventHandler(MouseEvent.ANY, squareHandler);
     }
-                
-    /*
+
+    /**
     * Draw an ellipse onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static public void ellipse(Canvas canvas, GraphicsContext gc) {
         //can only stroke to the right
         //fills left like a square
-        //canvas.removeEventHandler(MouseEvent.ANY, this); //need to store events as variables
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+
+        EventHandler<MouseEvent> ellipseHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, w, h;
             customDBox dbox = new customDBox(gc);
 
@@ -178,22 +204,25 @@ public class DrawTool {
                 }                                 
                         //if doesn't work canvas.setOnAction
             }
-        });
+        };
+
+        // Store the handler
+        currentHandler = ellipseHandler;
+        canvas.addEventHandler(MouseEvent.ANY, ellipseHandler);
     }
-            
-    /*
+
+    /**
     * Draw an circle onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static public void circle(Canvas canvas, GraphicsContext gc) {
         //try using strokearc
         //can only stroke to the right
         //fills left like a square
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+
+        EventHandler<MouseEvent> circleHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, w, h;
-            customDBox dbox = new customDBox(gc);
 
             @Override
             public void handle(MouseEvent event) {
@@ -201,28 +230,34 @@ public class DrawTool {
                     case "MOUSE_PRESSED":
                         x1 = event.getX();
                         y1 = event.getY();
+                        break;
                     case "MOUSE_DRAGGED":
                         x2 = event.getX();
-                         y2 = event.getY();
+                        y2 = event.getY();
+                        break;
                     case "MOUSE_RELEASED":
                         w = x2 - x1;
-                        //h = y2 = y1;
                         gc.strokeOval(x1, y1, w, w);
                         gc.fillOval(x1, y1, w, w);
+                        break;
                 }
             }
-        });
-    }        
-        
-    /*
+        };
+
+        // Store the handler
+        currentHandler = circleHandler;
+        canvas.addEventHandler(MouseEvent.ANY, circleHandler);
+    }
+
+    /**
     * Draw a rounded rectangle onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static public void roundRectangle(Canvas canvas, GraphicsContext gc) {
-            //can only stroke to the right
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+        //can only stroke to the right
+
+        EventHandler<MouseEvent> rRectHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, w, h;
             customDBox dbox = new customDBox(gc);
 
@@ -242,17 +277,20 @@ public class DrawTool {
                         gc.fillRoundRect(x1, y1, w, h, 10, 10);
                 }
             }
-        });
+        };
+
+        // Store the handler
+        currentHandler = rRectHandler;
+        canvas.addEventHandler(MouseEvent.ANY, rRectHandler);
     }        
                 
-    /*
+    /**
     * Erase lines, shapes, and images on the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
     */
     static void erase(Canvas canvas, GraphicsContext gc) { 
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> eraseHandler = new EventHandler<MouseEvent>() {
 
             @Override
             public void handle(MouseEvent event) {
@@ -269,26 +307,28 @@ public class DrawTool {
                     case "MOUSE_RELEASED":
                 }
             }
-        });
+        };
+        // Store the handler
+        currentHandler = eraseHandler;
+        canvas.addEventHandler(MouseEvent.ANY, eraseHandler);
     }
 
-    /*
+    /**
     * Draw a polygon onto the canvas. 
-    * @ param canvas takes a canvas
-    * @ param gc takes a graphics context
-    * @ param n take an int for the number of sides
+    * @param canvas takes a canvas
+    * @param gc takes a graphics context
+    * @param n take an int for the number of sides
     * doesn't work yet
     */
     static public void polygon(Canvas canvas, GraphicsContext gc) {
         //can only stroke to the right
-        canvas.addEventHandler(MouseEvent.ANY,
-                new EventHandler<MouseEvent>() {
+        EventHandler<MouseEvent> polygonHandler = new EventHandler<MouseEvent>() {
             double x1, y1, x2, y2, x3, y3, x4, y4, x5, y5,
                     x6, y6, x7, y7, x8, y8, x9, y9, x10, y10;
             
             //in dialog box should ask for number of sides
             //get n from dbox
-            customDBox dbox = new customDBox(gc, 0);
+            customDBox dbox = new customDBox(gc);
             int n = dbox.getVal(); //or issue here?
             //int n = 3;
             double[] xarr = new double[n];
@@ -326,7 +366,10 @@ public class DrawTool {
                         gc.strokePolygon(xarr,yarr,n);
                 }
             }
-        });
+        };
+        // Store the handler
+        currentHandler = polygonHandler;
+        canvas.addEventHandler(MouseEvent.ANY, polygonHandler);
     }
         
     /**
