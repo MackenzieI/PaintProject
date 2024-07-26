@@ -42,7 +42,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -64,7 +63,33 @@ Some more: a second one.
 */
 
 public class PainT extends Application {
-    
+    // Put icon paths into variables
+    String filePathStart = "C:\\Users\\Mackenzie\\Documents\\cs250\\"; // Change this to the start of the absolute path on your system
+    String iconsDefault = filePathStart + "PaintProject-main\\pictures\\default.png";
+    String iconsFile = filePathStart + "PaintProject-main\\icons\\fileicon.png";
+    String iconsSave = filePathStart + "PaintProject-main\\icons\\saveicon.png";
+    String iconsClear = filePathStart + "PaintProject-main\\icons\\clearicon.png";
+    String iconsProject = filePathStart + "PaintProject-main\\icons\\projecticon.png";
+    String iconsSettings = filePathStart + "PaintProject-main\\icons\\settingsicon.png";
+    String iconsUndo = filePathStart + "PaintProject-main\\icons\\undoicon.png";
+    String iconsRedo = filePathStart + "PaintProject-main\\icons\\redoicon.png";
+    String iconsExit = filePathStart + "PaintProject-main\\icons\\exiticon.png";
+    String iconsHelp = filePathStart + "PaintProject-main\\icons\\helpicon.png";
+    String iconsAbout = filePathStart + "PaintProject-main\\icons\\abouticon.png";
+    String iconsLine = filePathStart + "PaintProject-main\\icons\\lineicon.png";
+    String iconsPencil = filePathStart + "PaintProject-main\\icons\\pencilicon.png";
+    String iconsSize = filePathStart + "PaintProject-main\\icons\\sizeicon.png";
+    String iconsText = filePathStart + "PaintProject-main\\icons\\texticon.png";
+    String iconsDropper = filePathStart + "PaintProject-main\\icons\\droppericon.png";
+    String iconsErase = filePathStart + "PaintProject-main\\icons\\eraseicon.png";
+    String iconsShapes = filePathStart + "PaintProject-main\\icons\\shapesicon.png";
+    String iconsRect = filePathStart + "PaintProject-main\\icons\\rectangleicon.png";
+    String iconsRRect = filePathStart + "PaintProject-main\\icons\\roundrectangleicon.png";
+    String iconsSquare = filePathStart + "PaintProject-main\\icons\\squareicon.png";
+    String iconsEllipse = filePathStart + "PaintProject-main\\icons\\ellipseicon.png";
+    String iconsCircle = filePathStart + "PaintProject-main\\icons\\circleicon.png";
+    String iconsPolygon = filePathStart + "PaintProject-main\\icons\\polygonicon.png";
+
     MyLogger logger = new MyLogger();
     Log log;
     
@@ -92,7 +117,7 @@ public class PainT extends Application {
         
         ToolBar tb = new ToolBar();
         
-        inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png"); 
+        inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Desktop\\PaintProject-main\\PaintProject-main\\pictures\\default.png");
         Image image = new Image(inputstream);
         
         //canvas and context
@@ -157,31 +182,31 @@ public class PainT extends Application {
         CheckMenuItem citemPolygon = new CheckMenuItem("Polygon");
         
         //initialize icons
-        ImageView iconfile = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\fileicon.png")));
-        ImageView iconsave = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\saveicon.png")));
-        ImageView iconclear = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\clearicon.png")));
-        ImageView iconproject = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\projecticon.png")));
-        ImageView iconsettings = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\settingsicon.png")));
-        ImageView iconundo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\undoicon.png")));
-        ImageView iconredo = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\redoicon.png")));
-        ImageView iconclose = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\exiticon.png")));
-        ImageView iconhelp = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\helpicon.png")));
-        ImageView iconabout = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\abouticon.png")));
-        ImageView iconline = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\lineicon.png")));
-        ImageView iconline2 = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\lineicon.png")));        
-        ImageView iconpencil = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\pencilicon.png")));
-        ImageView iconwidth = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\sizeicon.png")));
-        ImageView iconsize = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\sizeicon.png")));
-        ImageView icontext = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\texticon.png")));
-        ImageView iconeyedropper = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\droppericon.png")));
-        ImageView iconerase = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\eraseicon.png")));
-        ImageView iconshapes = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\shapesicon.png")));        
-        ImageView iconrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\rectangleicon.png")));
-        ImageView iconroundrectangle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\roundrectangleicon.png")));
-        ImageView iconsquare = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\squareicon.png")));
-        ImageView iconellipse = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\ellipseicon.png")));
-        ImageView iconcircle = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\circleicon.png")));
-        ImageView iconpolygon = new ImageView(new Image(new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\icons\\polygonicon.png")));
+        ImageView iconfile = new ImageView(new Image(new FileInputStream(iconsFile)));
+        ImageView iconsave = new ImageView(new Image(new FileInputStream(iconsSave)));
+        ImageView iconclear = new ImageView(new Image(new FileInputStream(iconsClear)));
+        ImageView iconproject = new ImageView(new Image(new FileInputStream(iconsProject)));
+        ImageView iconsettings = new ImageView(new Image(new FileInputStream(iconsSettings)));
+        ImageView iconundo = new ImageView(new Image(new FileInputStream(iconsUndo)));
+        ImageView iconredo = new ImageView(new Image(new FileInputStream(iconsRedo)));
+        ImageView iconclose = new ImageView(new Image(new FileInputStream(iconsExit)));
+        ImageView iconhelp = new ImageView(new Image(new FileInputStream(iconsHelp)));
+        ImageView iconabout = new ImageView(new Image(new FileInputStream(iconsAbout)));
+        ImageView iconline = new ImageView(new Image(new FileInputStream(iconsLine)));
+        ImageView iconline2 = new ImageView(new Image(new FileInputStream(iconsLine)));
+        ImageView iconpencil = new ImageView(new Image(new FileInputStream(iconsPencil)));
+        ImageView iconwidth = new ImageView(new Image(new FileInputStream(iconsSize)));
+        ImageView iconsize = new ImageView(new Image(new FileInputStream(iconsSize)));
+        ImageView icontext = new ImageView(new Image(new FileInputStream(iconsText)));
+        ImageView iconeyedropper = new ImageView(new Image(new FileInputStream(iconsDropper)));
+        ImageView iconerase = new ImageView(new Image(new FileInputStream(iconsErase)));
+        ImageView iconshapes = new ImageView(new Image(new FileInputStream(iconsShapes)));
+        ImageView iconrectangle = new ImageView(new Image(new FileInputStream(iconsRect)));
+        ImageView iconroundrectangle = new ImageView(new Image(new FileInputStream(iconsRRect)));
+        ImageView iconsquare = new ImageView(new Image(new FileInputStream(iconsSquare)));
+        ImageView iconellipse = new ImageView(new Image(new FileInputStream(iconsEllipse)));
+        ImageView iconcircle = new ImageView(new Image(new FileInputStream(iconsCircle)));
+        ImageView iconpolygon = new ImageView(new Image(new FileInputStream(iconsPolygon)));
 
         //set icon graphics
         itemFile.setGraphic(iconfile);
@@ -269,7 +294,7 @@ public class PainT extends Application {
             dialog.showAndWait();
         });        
         
-        /*
+        /**
         * open a text input dialog when item 12 is clicked
         * user enters text that is turned into a text object
         * on the image. not fully implemented yet
@@ -343,7 +368,7 @@ public class PainT extends Application {
             @Override
             public void handle(ActionEvent t) {
                 try {
-                    inputstream = new FileInputStream("C:\\Users\\Mackenzie\\Documents\\cs250\\Pain(t)\\pictures\\default.png");
+                    inputstream = new FileInputStream(iconsDefault);
                     Image image = new Image(inputstream);
                     gc.drawImage(image,WIDTH,HEIGHT - 100);
                     //Undo.push(t);
@@ -370,15 +395,11 @@ public class PainT extends Application {
                 Undo.push(event);
             }
         });        
-        
-        
-               
+
         //action event for eyedropper     
         citemEyedropper.setOnAction(e -> {
                 if (citemEyedropper.isSelected()) {
                     selectedTool = 1; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);            
         });
@@ -414,14 +435,10 @@ public class PainT extends Application {
         citemErase.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) { 
-                if (selectedTool == 2) {
-                    selectedTool = 0;
-                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
-                }
-                else {
+                if (citemErase.isSelected()) {
                     selectedTool = 2;
                     selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
-                } 
+                }
             }            
         });        
         
@@ -429,14 +446,10 @@ public class PainT extends Application {
         citemPencil.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if (selectedTool == 3) {
-                    selectedTool = 0; 
-                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);                    
+                if (citemPencil.isSelected()) {
+                    selectedTool = 3;
                 }
-                else { 
-                    selectedTool = 3; 
-                    selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);    
-                }
+                selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
         });
         
@@ -446,8 +459,6 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemStraightLine.isSelected()) {
                     selectedTool = 4; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
@@ -459,8 +470,6 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemRectangle.isSelected()) {
                     selectedTool = 5; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
@@ -472,8 +481,6 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemRoundRect.isSelected()) {
                     selectedTool = 6; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
@@ -485,8 +492,6 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemSquare.isSelected()) {
                     selectedTool = 7; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
@@ -498,8 +503,6 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemEllipse.isSelected()) {
                     selectedTool = 8; }
-                else {
-                    selectedTool = 0; }
                 
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
@@ -511,30 +514,26 @@ public class PainT extends Application {
             public void handle(ActionEvent event) {
                 if (citemCircle.isSelected()) {
                     selectedTool = 9; }
-                else {
-                    selectedTool = 0; }
-                
+
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
-        });      
-        
+        });
+
         //action event for polygon tool
         citemPolygon.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 if (citemPolygon.isSelected()) {
                     selectedTool = 10; }
-                else {
-                    selectedTool = 0; }
-                
+
                 selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
             }
-        });                        
-        
+        });
+
         //zoom slider tool
         Slider slider = new Slider();
         slider.setMin(0);
-        slider.setMax(100);       
+        slider.setMax(100);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMajorTickUnit(50);
@@ -608,13 +607,13 @@ public class PainT extends Application {
             customDBox dialog = new customDBox(scroll, canvas, scene, primaryStage);
         });        
         
-        /*
+        /**
         * add keyboard controls to scene
-        * @ inputs control s: save
-        * @ inputs alt f: open file
-        * @ inputs control r: resize
-        * @ inputs escape: exit
-        * @ inputs shift e: erase
+        * @inputs control s: save
+        * @inputs alt f: open file
+        * @inputs control r: resize
+        * @inputs escape: exit
+        * @inputs shift e: erase
         */
         scene.addEventHandler(KeyEvent.KEY_PRESSED, (key) -> {
             if(key.getCode()==KeyCode.S && key.isControlDown()) {
@@ -642,8 +641,7 @@ public class PainT extends Application {
             
             //selectedToolListener(canvas, gc, colorPicker1, colorLabel, selectedTool, toolLabel);
         });
-        
-        
+
         primaryStage.setTitle("Pain(t)");
         primaryStage.setScene(scene);
 
@@ -652,6 +650,7 @@ public class PainT extends Application {
     } 
 
     /**
+    * Undoes an action on the stack
     * @param Undo take a stack Undo and pop it from the list
     * @param Redo take a stack Redo and add it to the list
     */
@@ -667,7 +666,7 @@ public class PainT extends Application {
     * finds if a change was made to the default canvas
     * opens a confirmation box before closing program
     * @param canvas canvas to compare
-     * @return boolean returns true if the canvas was changed
+    * @return boolean returns true if the canvas was changed
     */
     public boolean findChange(Canvas canvas) {
         boolean isChanged = false;
@@ -711,6 +710,10 @@ public class PainT extends Application {
     */
     public void selectedToolListener(Canvas canvas, GraphicsContext gc, ColorPicker colorPicker1, 
             Label colorLabel, int selectedTool, Label toolLabel) {
+
+        // Remove the current event handler
+        DrawTool.removeHandler(canvas);
+
         switch (selectedTool) {
             case 1:
                 Color color = (Color) gc.getStroke();
@@ -727,7 +730,7 @@ public class PainT extends Application {
                 toolLabel.setText("Active Tool: " + selectedTool+"\nEraser");                
                 break;
             case 3:
-                DrawTool.pencil(canvas, gc);
+                DrawTool.pencil(canvas, gc, colorPicker1);
                 toolLabel.setText("Active Tool: " + selectedTool+"\nPencil");
                 break;
             case 4:
@@ -762,8 +765,8 @@ public class PainT extends Application {
                 toolLabel.setText("Active Tool: " + selectedTool+"\nNone");
                 break;
         }
-    }    
-    
+    }
+
     public void startTask() 
     {
         // Create a Runnable
