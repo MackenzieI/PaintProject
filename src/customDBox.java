@@ -1,7 +1,6 @@
 package pain.t;
 
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -13,7 +12,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -34,7 +32,7 @@ class customDBox {
         Label fill_text = new Label("Fill: ");
 
         ColorPicker edgeColor = new ColorPicker();
-        edgeColor.setValue(Color.BLACK);
+        edgeColor.setValue(edgeColor.getValue());
         ColorPicker fillColor = new ColorPicker();
         fillColor.setValue(Color.LIGHTGRAY);
 
@@ -117,6 +115,12 @@ class customDBox {
         dialog.getDialogPane().setContent(pane);
         dialog.getDialogPane().getButtonTypes().add(close);
         dialog.show();
-    }    
-    
+    }
+
+    /**
+     * Returns the Value set by the Dialog Box
+     */
+    public int getVal() {
+        return val;
+    }
 }
